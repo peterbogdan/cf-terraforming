@@ -363,6 +363,36 @@ func generateResources() func(cmd *cobra.Command, args []string) {
 					jsonStructData[i].(map[string]interface{})["advertisement"] = "off"
 				}
 			}
+		case "cloudflare_ip_list":
+			jsonPayload, err := api.ListIPLists(context.Background(), accountID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			resourceCount = len(jsonPayload)
+			m, _ := json.Marshal(jsonPayload)
+			json.Unmarshal(m, &jsonStructData)
+
+			for i := 0; i < resourceCount; i++ {
+				ipItemsJsonPayload, err := api.ListIPListItems(context.Background(), accountID, jsonPayload[i].ID)
+				if err != nil {
+					log.Fatal(err)
+				}
+				ipItemsData := map[string][]map[string]interface{}{}
+				ipItemsCount := len(ipItemsJsonPayload)
+				for j := 0; j < ipItemsCount; j++ {
+					item := map[string]interface{}{
+						"value":   ipItemsJsonPayload[j].IP,
+						"comment": ipItemsJsonPayload[j].Comment,
+					}
+					ipItemsData[jsonPayload[i].ID] = append(ipItemsData[jsonPayload[i].ID], item)
+
+				}
+				items, exists := ipItemsData[jsonPayload[i].ID]
+				if exists {
+					jsonStructData[i].(map[string]interface{})["item"] = items
+				}
+			}
 		case "cloudflare_certificate_pack":
 			jsonPayload, err := api.ListCertificatePacks(context.Background(), zoneID)
 			if err != nil {
