@@ -363,6 +363,27 @@ func generateResources() func(cmd *cobra.Command, args []string) {
 					jsonStructData[i].(map[string]interface{})["advertisement"] = "off"
 				}
 			}
+		case "cloudflare_magic_firewall_ruleset":
+			jsonPayload, err := api.ListMagicFirewallRulesets(context.Background(), accountID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			resourceCount = len(jsonPayload)
+			m, _ := json.Marshal(jsonPayload)
+			json.Unmarshal(m, &jsonStructData)
+
+			for i := 0; i < resourceCount; i++ {
+				rulesetJsonPayload, err := api.GetMagicFirewallRuleset(context.Background(), accountID, jsonPayload[i].ID)
+				if err != nil {
+					log.Fatal(err)
+				}
+				var rulesetMap []interface{}
+				m, _ := json.Marshal(rulesetJsonPayload.Rules)
+				json.Unmarshal(m, &rulesetMap)
+				jsonStructData[i].(map[string]interface{})["rules"] = rulesetMap
+				fmt.Println(rulesetMap)
+			}
 		case "cloudflare_certificate_pack":
 			jsonPayload, err := api.ListCertificatePacks(context.Background(), zoneID)
 			if err != nil {
